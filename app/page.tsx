@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Search, Package, DollarSign, AlertTriangle, BarChart3, Download } from "lucide-react";
+import { Plus, Search, Package, DollarSign, AlertTriangle, BarChart3, Download, Info } from "lucide-react";
 import Modal         from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Toast         from "@/components/ui/Toast";
 import ItemForm      from "@/components/ItemForm";
 import ItemTable     from "@/components/ItemTable";
+import AboutModal from "@/components/AboutModal";
 import { formatPrice } from "@/lib/utils";
 import type { Item, ItemFormValues } from "@/types";
 
@@ -25,6 +26,7 @@ export default function HomePage() {
   const [showForm,    setShowForm]    = useState(false);
   const [editItem,    setEditItem]    = useState<Item | null>(null);
   const [deleteItem,  setDeleteItem]  = useState<Item | null>(null);
+  const [showAbout, setShowAbout] = useState(false);
 
     // Export
   function exportCSV() {
@@ -162,6 +164,13 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAbout(true)}
+                className="flex items-center gap-2 px-3.5 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                <Info size={15} />
+                <span className="hidden sm:inline">About</span>
+              </button>
               <button
                 onClick={exportCSV}
                 disabled={items.length === 0}
@@ -352,6 +361,7 @@ export default function HomePage() {
           onClose={() => setToast(null)}
         />
       )}
+      <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)}/>
     </div>
   );
 }
