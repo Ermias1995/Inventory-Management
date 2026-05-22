@@ -32,7 +32,7 @@ export default function ItemForm({
     description:    initialData?.description   ?? "",
     category:       initialData?.category      ?? "",
     quantity:       initialData?.quantity      ?? 0,
-    price:          Number(initialData?.price) ?? 0,
+    price:          Number(initialData?.price ?? 0),
     imageUrl:       initialData?.imageUrl      ?? undefined,
     imagePublicId:  initialData?.imagePublicId ?? undefined,
   });
@@ -47,9 +47,11 @@ export default function ItemForm({
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: undefined }));
+    const { name, value, type } = e.target as HTMLInputElement;
+  setForm((prev) => ({
+    ...prev, [name]: type === "number" ? (value === "" ? 0 : Number(value)) : value,
+  }));
+  setErrors((prev) => ({ ...prev, [name]: undefined }));
   }
 
   // Image upload
@@ -225,7 +227,7 @@ export default function ItemForm({
             type="number"
             min="0"
             step="0.01"
-            value={form.price}
+            value={form.price === 0 ? "" : form.price}
             onChange={handleChange}
             placeholder="0.00"
             className={inputClass("price")}
@@ -243,7 +245,7 @@ export default function ItemForm({
             name="quantity"
             type="number"
             min="0"
-            value={form.quantity}
+            value={form.quantity === 0 ? "" : form.quantity}
             onChange={handleChange}
             placeholder="0"
             className={inputClass("quantity")}
