@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Search, Package, DollarSign, AlertTriangle, BarChart3 } from "lucide-react";
+import { Plus, Search, Package, DollarSign, AlertTriangle, BarChart3, Download } from "lucide-react";
 import Modal         from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Toast         from "@/components/ui/Toast";
@@ -25,6 +25,24 @@ export default function HomePage() {
   const [showForm,    setShowForm]    = useState(false);
   const [editItem,    setEditItem]    = useState<Item | null>(null);
   const [deleteItem,  setDeleteItem]  = useState<Item | null>(null);
+
+    // Export
+  function exportCSV() {
+    const headers = ["ID", "Name", "Description", "Category", "Quantity", "Price", "Created At"];
+    const rows    = items.map((i) => [
+      i.id, i.name, i.description, i.category,
+      i.quantity, i.price, new Date(i.createdAt).toLocaleDateString(),
+    ]);
+    const csv  = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `inventory-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("CSV exported successfully!", "success");
+  }
 
   // Fetch all items
   const fetchItems = useCallback(async () => {
@@ -143,13 +161,24 @@ export default function HomePage() {
               </div>
             </div>
 
-            <button
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
-            >
-              <Plus size={16} />
-              <span className="hidden sm:inline">Add Item</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={exportCSV}
+                disabled={items.length === 0}
+                className="flex items-center gap-2 px-3.5 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-40"
+              >
+                <Download size={15} />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+
+              <button
+                onClick={() => setShowForm(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+              >
+                <Plus size={16} />
+                <span className="hidden sm:inline">Add Item</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -220,24 +249,45 @@ export default function HomePage() {
           </div>
 
           <div className="flex gap-2 flex-wrap">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  category === cat
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+            {categories.map((cat) => {
+              const count = cat === "All"
+                ? items.length
+                : items.filter((i) => i.category === cat).length;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                    category === cat
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {cat}
+                  <span className={`text-xs px-1.5 py-0.5 rounded-md font-normal ${
+                    category === cat ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+
           </div>
         </div>
 
         {/* ── Table ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <p className="text-sm text-gray-500">
+              Showing{" "}
+              <span className="font-semibold text-gray-900">{filtered.length}</span>
+              {" "}of{" "}
+              <span className="font-semibold text-gray-900">{items.length}</span>
+              {" "}items
+            </p>
+          </div>
+          <div className="p-6">
           {loading ? (
             <div className="flex items-center justify-center py-24">
               <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -249,6 +299,7 @@ export default function HomePage() {
               onDelete={(item) => setDeleteItem(item)}
             />
           )}
+        </div>
         </div>
       </main>
 
