@@ -102,9 +102,9 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
         <div className="overflow-y-auto p-6 space-y-6">
 
           {/* Developer card */}
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-5 border border-indigo-100">
+          <div className="bg-linear-to-br from-indigo-50 to-purple-50 rounded-2xl p-5 border border-indigo-100">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-200">
+              <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-200">
                 <User size={26} className="text-white" />
               </div>
               <div className="flex-1">

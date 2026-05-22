@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Trash2, Package, ArrowUpDown } from "lucide-react";
+import { Pencil, Trash2, Package, ArrowUpDown, Eye } from "lucide-react";
 import { formatPrice, formatDate, getStockStatus } from "@/lib/utils";
 import { getOptimizedUrl } from "@/lib/cloudinary";
 import type { Item } from "@/types";
@@ -11,13 +11,14 @@ interface ItemTableProps {
   items:    Item[];
   onEdit:   (item: Item) => void;
   onDelete: (item: Item) => void;
+  onView:   (item: Item) => void;
 }
 
 type SortField = "name" | "category" | "quantity" | "price" | "createdAt";
 
-export default function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
-  const [sortField, setSortField]   = useState<SortField>("createdAt");
-  const [sortDir,   setSortDir]     = useState<"asc" | "desc">("desc");
+export default function ItemTable({ items, onEdit, onDelete, onView }: ItemTableProps) {
+  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortDir,   setSortDir]   = useState<"asc" | "desc">("desc");
 
   function handleSort(field: SortField) {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -52,16 +53,14 @@ export default function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
     </button>
   );
 
-  // Empty state
+  // ── Empty state ───────────────────────────────────────────────
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
           <Package size={32} className="text-indigo-400" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-1">
-          No items yet
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-1">No items yet</h3>
         <p className="text-sm text-gray-500">
           Add your first inventory item to get started.
         </p>
@@ -77,11 +76,11 @@ export default function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
           <thead>
             <tr className="border-b border-gray-100">
               {[
-                { field: "name",      label: "Item"      },
-                { field: "category",  label: "Category"  },
-                { field: "quantity",  label: "Quantity"  },
-                { field: "price",     label: "Price"     },
-                { field: "createdAt", label: "Added"     },
+                { field: "name",      label: "Item"     },
+                { field: "category",  label: "Category" },
+                { field: "quantity",  label: "Quantity" },
+                { field: "price",     label: "Price"    },
+                { field: "createdAt", label: "Added"    },
               ].map(({ field, label }) => (
                 <th
                   key={field}
@@ -103,24 +102,33 @@ export default function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
                   key={item.id}
                   className="group hover:bg-gray-50/50 transition-colors"
                 >
-                  {/* Item */}
+                  {/* Item — clicking image or name opens detail */}
                   <td className="py-4 pr-4">
                     <div className="flex items-center gap-3">
                       {item.imageUrl ? (
                         <img
                           src={getOptimizedUrl(item.imageUrl, 80)}
                           alt={item.name}
-                          className="w-10 h-10 rounded-lg object-cover border border-gray-100"
+                          onClick={() => onView(item)}
+                          className="w-10 h-10 rounded-lg object-cover border border-gray-100 cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:ring-offset-1 transition-all"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <div
+                          onClick={() => onView(item)}
+                          className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-indigo-50 hover:ring-2 hover:ring-indigo-400 hover:ring-offset-1 transition-all"
+                        >
                           <Package size={18} className="text-gray-400" />
                         </div>
                       )}
                       <div>
-                        <p className="font-medium text-gray-900">{item.name}</p>
+                        <p
+                          onClick={() => onView(item)}
+                          className="font-medium text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors"
+                        >
+                          {item.name}
+                        </p>
                         {item.description && (
-                          <p className="text-xs text-gray-400 truncate max-w-[200px]">
+                          <p className="text-xs text-gray-400 truncate max-w-50">
                             {item.description}
                           </p>
                         )}
@@ -162,18 +170,27 @@ export default function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
                     {formatDate(item.createdAt)}
                   </td>
 
-                  {/* Actions */}
+                  {/* Actions — view + edit + delete */}
                   <td className="py-4">
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => onEdit(item)}
+                        onClick={() => onView(item)}
                         className="p-2 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                        title="View details"
+                      >
+                        <Eye size={15} />
+                      </button>
+                      <button
+                        onClick={() => onEdit(item)}
+                        className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                        title="Edit item"
                       >
                         <Pencil size={15} />
                       </button>
                       <button
                         onClick={() => onDelete(item)}
                         className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete item"
                       >
                         <Trash2 size={15} />
                       </button>
@@ -196,33 +213,53 @@ export default function ItemTable({ items, onEdit, onDelete }: ItemTableProps) {
               className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
             >
               <div className="flex items-start gap-3">
+                {/* Image — clickable */}
                 {item.imageUrl ? (
                   <img
                     src={getOptimizedUrl(item.imageUrl, 80)}
                     alt={item.name}
-                    className="w-14 h-14 rounded-xl object-cover border border-gray-100 shrink-0"
+                    onClick={() => onView(item)}
+                    className="w-14 h-14 rounded-xl object-cover border border-gray-100 shrink-0 cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:ring-offset-1 transition-all"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+                  <div
+                    onClick={() => onView(item)}
+                    className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 cursor-pointer hover:bg-indigo-50 transition-colors"
+                  >
                     <Package size={22} className="text-gray-400" />
                   </div>
                 )}
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold text-gray-900 truncate">
+                    {/* Name — clickable */}
+                    <p
+                      onClick={() => onView(item)}
+                      className="font-semibold text-gray-900 truncate cursor-pointer hover:text-indigo-600 transition-colors"
+                    >
                       {item.name}
                     </p>
+
+                    {/* Actions */}
                     <div className="flex gap-1 shrink-0">
                       <button
-                        onClick={() => onEdit(item)}
+                        onClick={() => onView(item)}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                        title="View details"
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => onEdit(item)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                        title="Edit item"
                       >
                         <Pencil size={14} />
                       </button>
                       <button
                         onClick={() => onDelete(item)}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete item"
                       >
                         <Trash2 size={14} />
                       </button>

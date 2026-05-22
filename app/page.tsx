@@ -8,6 +8,7 @@ import Toast         from "@/components/ui/Toast";
 import ItemForm      from "@/components/ItemForm";
 import ItemTable     from "@/components/ItemTable";
 import AboutModal from "@/components/AboutModal";
+import ItemDetailModal from "@/components/ItemDetailModal";
 import { formatPrice } from "@/lib/utils";
 import type { Item, ItemFormValues } from "@/types";
 
@@ -27,6 +28,7 @@ export default function HomePage() {
   const [editItem,    setEditItem]    = useState<Item | null>(null);
   const [deleteItem,  setDeleteItem]  = useState<Item | null>(null);
   const [showAbout, setShowAbout] = useState(false);
+  const [detailItem, setDetailItem] = useState<Item | null>(null);
 
     // Export
   function exportCSV() {
@@ -306,6 +308,7 @@ export default function HomePage() {
               items={filtered}
               onEdit={(item) => setEditItem(item)}
               onDelete={(item) => setDeleteItem(item)}
+              onView={(item) => setDetailItem(item)}
             />
           )}
         </div>
@@ -362,6 +365,7 @@ export default function HomePage() {
         />
       )}
       <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)}/>
+      <ItemDetailModal item={detailItem} onClose={() => setDetailItem(null)} onEdit={(item) => { setDetailItem(null); setEditItem(item); }}/>
     </div>
   );
 }

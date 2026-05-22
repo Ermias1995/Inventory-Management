@@ -22,7 +22,7 @@ export default function Toast({ message, type, onClose }: ToastProps) {
   return (
     <div
       className={cn(
-        "fixed bottom-6 right-6 z-[100] flex items-center gap-3",
+        "fixed bottom-6 right-6 z-100 flex items-center gap-3",
         "px-4 py-3 rounded-xl shadow-lg text-sm font-medium",
         "animate-in slide-in-from-bottom-4 duration-300",
         type === "success"
