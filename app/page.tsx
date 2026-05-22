@@ -16,6 +16,9 @@ type ToastState = { message: string; type: "success" | "error" } | null;
 
 export default function HomePage() {
   const [items,       setItems]       = useState<Item[]>([]);
+  const [totalItems,  setTotalItems]  = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages,  setTotalPages]  = useState(1);
   const [loading,     setLoading]     = useState(true);
   const [submitting,  setSubmitting]  = useState(false);
   const [deleting,    setDeleting]    = useState(false);
@@ -49,11 +52,19 @@ export default function HomePage() {
   }
 
   // Fetch all items
-  const fetchItems = useCallback(async () => {
+  const fetchItems = useCallback(async (page: number = 1) => {
+    setLoading(true);
     try {
-      const res  = await fetch("/api/items");
+      const res  = await fetch(`/api/items?page=${page}&limit=10`);
       const json = await res.json();
-      if (json.success) setItems(json.data);
+      if (json.success) {
+        setItems(json.data);
+        setTotalItems(json.total);
+        setCurrentPage(json.page);
+        setTotalPages(json.totalPages);
+      } else {
+        showToast("Failed to load items", "error");
+      }
     } catch {
       showToast("Failed to load items", "error");
     } finally {
@@ -61,7 +72,7 @@ export default function HomePage() {
     }
   }, []);
 
-  useEffect(() => { fetchItems(); }, [fetchItems]);
+  useEffect(() => { fetchItems(1); }, [fetchItems]);
 
   // Toast helper
   function showToast(message: string, type: "success" | "error") {
@@ -79,9 +90,10 @@ export default function HomePage() {
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
-      setItems((prev) => [json.data, ...prev]);
       setShowForm(false);
       showToast("Item added successfully!", "success");
+      // Refresh to page 1 to see new item
+      fetchItems(1);
     } catch {
       showToast("Failed to add item", "error");
     } finally {
@@ -101,11 +113,10 @@ export default function HomePage() {
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
-      setItems((prev) =>
-        prev.map((i) => (i.id === editItem.id ? json.data : i))
-      );
       setEditItem(null);
       showToast("Item updated successfully!", "success");
+      // Refresh current page to see updated item
+      fetchItems(currentPage);
     } catch {
       showToast("Failed to update item", "error");
     } finally {
@@ -121,9 +132,11 @@ export default function HomePage() {
       const res  = await fetch(`/api/items/${deleteItem.id}`, { method: "DELETE" });
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
-      setItems((prev) => prev.filter((i) => i.id !== deleteItem.id));
       setDeleteItem(null);
       showToast("Item deleted successfully!", "success");
+      // Refresh current page, or go to previous page if this was the last item
+      const pageToFetch = items.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+      fetchItems(pageToFetch);
     } catch {
       showToast("Failed to delete item", "error");
     } finally {
@@ -141,7 +154,7 @@ export default function HomePage() {
     return matchSearch && matchCategory;
   });
 
-  // Stats
+  // Stats (from total items, not just current page)
   const totalValue  = items.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0);
   const lowStock    = items.filter((i) => i.quantity > 0 && i.quantity <= 5).length;
   const outOfStock  = items.filter((i) => i.quantity === 0).length;
@@ -175,7 +188,7 @@ export default function HomePage() {
               </button>
               <button
                 onClick={exportCSV}
-                disabled={items.length === 0}
+                disabled={totalItems === 0}
                 className="flex items-center gap-2 px-3.5 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-40"
               >
                 <Download size={15} />
@@ -200,7 +213,7 @@ export default function HomePage() {
           {[
             {
               label: "Total Items",
-              value: items.length,
+              value: totalItems,
               icon:  <Package size={20} />,
               color: "indigo",
             },
@@ -262,7 +275,7 @@ export default function HomePage() {
           <div className="flex gap-2 flex-wrap">
             {categories.map((cat) => {
               const count = cat === "All"
-                ? items.length
+                ? totalItems
                 : items.filter((i) => i.category === cat).length;
               return (
                 <button
@@ -294,9 +307,29 @@ export default function HomePage() {
               Showing{" "}
               <span className="font-semibold text-gray-900">{filtered.length}</span>
               {" "}of{" "}
-              <span className="font-semibold text-gray-900">{items.length}</span>
+              <span className="font-semibold text-gray-900">{totalItems}</span>
               {" "}items
             </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchItems(currentPage - 1)}
+                disabled={currentPage === 1 || loading}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Previous
+              </button>
+              <div className="text-sm text-gray-600 px-2">
+                Page <span className="font-semibold">{currentPage}</span> of{" "}
+                <span className="font-semibold">{totalPages}</span>
+              </div>
+              <button
+                onClick={() => fetchItems(currentPage + 1)}
+                disabled={currentPage === totalPages || totalPages === 0 || loading}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next →
+              </button>
+            </div>
           </div>
           <div className="p-6">
           {loading ? (
