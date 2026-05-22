@@ -176,24 +176,12 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
             </div>
           </div>
 
-          {/* Project requirements met */}
-          <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100">
-            <h4 className="text-sm font-semibold text-emerald-800 mb-2">
-              ✅ All Requirements Met
-            </h4>
-            <p className="text-xs text-emerald-700 leading-relaxed">
-              All project requirements specified in the assessment have been implemented —
-              including CRUD operations, image uploading via Cloudinary, data persistence
-              with Neon PostgreSQL, responsive Tailwind CSS UI, and deployment to Vercel.
-            </p>
-          </div>
-
           {/* Contact / submission */}
           <div className="border border-gray-100 rounded-2xl p-4 space-y-2">
             <h4 className="text-sm font-semibold text-gray-900">Submission</h4>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <Mail size={13} className="text-indigo-400 shrink-0" />
-              Submitted to: enbbusinessconsultancy@gmail.com
+              Submitted to: E and B Business Consultancy PLC
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <GitBranch size={13} className="text-indigo-400 shrink-0" />
